@@ -1,5 +1,17 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Param,
+  NotFoundException,
+  ParseUUIDPipe,
+  Delete,
+  Body,
+} from '@nestjs/common';
 import { OrdersService } from './orders.service';
+import { CreateOrderDTO } from 'src/products/dtos/create-order.dto';
+import { UpdateOrderDTO } from 'src/products/dtos/update-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -11,8 +23,37 @@ export class OrdersController {
   getAll(): any {
     return this.ordersService.getAll();
   }
+
   @Get('/:id')
-  getOrderById(@Param('id') id: string) {
+  getOrderById(@Param('id', new ParseUUIDPipe()) id: string) {
+    if (!this.ordersService.getOrderById(id))
+      throw new NotFoundException('Order not found');
+
     return this.ordersService.getOrderById(id);
+  }
+
+  @Delete('/:id')
+  deleteOrderById(@Param('id', new ParseUUIDPipe()) id: string) {
+    if (!this.ordersService.deleteOrderById(id)) {
+      throw new NotFoundException('Order not found');
+    }
+    this.ordersService.deleteOrderById(id);
+    return { success: true };
+  }
+  @Post('/')
+  create(@Body() orderData: CreateOrderDTO) {
+    return this.ordersService.create(orderData);
+  }
+
+  @Put('/:id:')
+  updateById(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() orderData: UpdateOrderDTO,
+  ) {
+    if (!this.ordersService.getOrderById(id))
+      throw new NotFoundException('Order not found');
+
+    this.ordersService.updateById(id, orderData);
+    return { success: true };
   }
 }
